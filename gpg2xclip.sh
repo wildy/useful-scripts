@@ -10,6 +10,9 @@ GPG="$(which gpg2)"
 XCLIP="$(which xclip)"
 XCLIP_OPTS="-selection clipboard" # Use X clipboard
 ZENITY="$(which zenity)"
+NOTIFY_SEND="$(which notify-send)"
+NOTIFY_SEND_OPTS="gpg2xclip" # Set title
+
 LC_MESSAGES=C
 
 if [ -z $GPG ] || [ -z $XCLIP ] || [ -z $ZENITY ]; then
@@ -20,16 +23,38 @@ fi
 # Set xclip options
 XCLIP="$XCLIP $XCLIP_OPTS"
 
+function notify() {
+	if [ -z $NOTIFY_SEND ]; then
+		$NOTIFY_SEND="echo"
+		unset $NOTIFY_SEND_OPTS
+	fi
+
+	$NOTIFY_SEND "$NOTIFY_SEND_OPTS" "$1"
+}
+
 function encrypt() {
 	if [ -z $KEYID ]; then
-		echo "Key ID to encrypt to not set! Please set the \$KEYID variable."
+		notify "Key ID to encrypt to not set! Please set the \$KEYID variable."
 		exit 2
 	fi
-	$XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in
+	($XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in) && encrypt_success=1
+	if [ $encrypt_success == "1" ]; then
+		notify "Encrypted data in clipboard to key "${KEYID}""
+	else
+		notify "Failed to encrypt data in clipboard!"
+		exit 2
+	fi
 }
 
 function decrypt() {
-	$XCLIP -out | $GPG -d | $XCLIP -in
+	$XCLIP -out | $GPG -d | $XCLIP -in && decrypt_success=1
+	lines=$($XCLIP -out | wc -l)
+	if [ $decrypt_success == "1" ]; then
+		notify "Decrypted  in clipboard: $lines lines"
+	else
+		notify "Failed to decrypt encrypted data from keyboard!"
+		exit 3
+	fi
 }
 
 
