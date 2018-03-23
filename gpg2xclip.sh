@@ -8,11 +8,17 @@
 
 GPG="$(which gpg2)"
 XCLIP="$(which xclip)"
+XCLIP_OPTS="-selection clipboard" # Use X clipboard
+ZENITY="$(which zenity)"
+LC_MESSAGES=C
 
-if [ -z $GPG ] || [ -z $XCLIP ]; then
-	echo "GPG2 or xclip not found, please install it"
-	exit 1
+if [ -z $GPG ] || [ -z $XCLIP ] || [ -z $ZENITY ]; then
+        echo "GPG2 or xclip or Zenity not found, please install it"
+        exit 1
 fi
+
+# Set xclip options
+XCLIP="$XCLIP $XCLIP_OPTS"
 
 function encrypt() {
 	if [ -z $KEYID ]; then
