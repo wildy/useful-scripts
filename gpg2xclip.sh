@@ -49,9 +49,15 @@ function encrypt() {
 
 function decrypt() {
 	$XCLIP -out | $GPG -d | $XCLIP -in && decrypt_success=1
+<<<<<<< HEAD
 	chars=$($XCLIP -out | wc -m)
 	if [ $decrypt_success == "1" ]; then
 		notify "Decrypted in clipboard: $chars characters"
+=======
+	lines=$($XCLIP -out | wc -l)
+	if [ $decrypt_success == "1" ]; then
+		notify "Decrypted  in clipboard: $lines lines"
+>>>>>>> 43bd36a5a9d01770f8e59b2b3f50e642539dc4ec
 	else
 		notify "Failed to decrypt encrypted data from keyboard!"
 		exit 3
