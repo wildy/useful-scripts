@@ -34,10 +34,11 @@ function notify() {
 
 function encrypt() {
 	if [ -z $KEYID ]; then
-		notify "Key ID to encrypt to not set! Please set the \$KEYID variable."
-		exit 2
+		KEYID=$(zenity --entry --text "Enter Key ID")
 	fi
+
 	($XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in) && encrypt_success=1
+
 	if [ $encrypt_success == "1" ]; then
 		notify "Encrypted data in clipboard to key "${KEYID}""
 	else
