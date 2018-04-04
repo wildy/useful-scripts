@@ -25,11 +25,12 @@ XCLIP="$XCLIP $XCLIP_OPTS"
 
 function notify() {
 	if [ -z $NOTIFY_SEND ]; then
-		$NOTIFY_SEND="echo"
+		NOTIFY_SEND="echo"
 		unset $NOTIFY_SEND_OPTS
 	fi
+  $NOTIFY_SEND="$NOTIFY_SEND $NOTIFY_SEND_OPTS"
 
-	$NOTIFY_SEND "$NOTIFY_SEND_OPTS" "$1"
+	$NOTIFY_SEND "$1"
 }
 
 function encrypt() {
@@ -40,7 +41,7 @@ function encrypt() {
 	($XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in) && encrypt_success=1
 
 	if [ $encrypt_success == "1" ]; then
-		notify "Encrypted data in clipboard to key "${KEYID}""
+		notify "Encrypted data in clipboard to key ${KEYID}"
 	else
 		notify "Failed to encrypt data in clipboard!"
 		exit 2
@@ -58,11 +59,24 @@ function decrypt() {
 	fi
 }
 
-
+function import_pubkey() {
+  IMPORT_OUTPUT=$($XCLIP -out | $GPG --import 2>&1)
+  echo "---"
+  echo $IMPORT_OUTPUT
+  echo "---"
+  if [ $? == "0" ]; then
+    notify "$IMPORT_OUTPUT"
+  else
+    notify "Failed to import public key from keyboard: ${IMPORT_OUTPUT}"
+    exit 3
+  fi
+}
 CONTENT="$($XCLIP -out)"
 
 if [[ ${CONTENT} =~ "-----BEGIN PGP MESSAGE-----" ]]; then
 	decrypt
+elif [[ ${CONTENT} =~ "-----BEGIN PGP PUBLIC KEY BLOCK-----" ]]; then
+  import_pubkey
 else
 	encrypt
 fi
