@@ -16,47 +16,47 @@ NOTIFY_SEND_OPTS="gpg2xclip" # Set title
 LC_MESSAGES=C
 
 if [ -z $GPG ] || [ -z $XCLIP ] || [ -z $ZENITY ]; then
-        echo "GPG2 or xclip or Zenity not found, please install it"
-        exit 1
+  echo "GPG2 or xclip or Zenity not found, please install it"
+  exit 1
 fi
 
 # Set xclip options
 XCLIP="$XCLIP $XCLIP_OPTS"
 
 function notify() {
-	if [ -z $NOTIFY_SEND ]; then
-		NOTIFY_SEND="echo"
-		unset $NOTIFY_SEND_OPTS
-	fi
+  if [ -z $NOTIFY_SEND ]; then
+    NOTIFY_SEND="echo"
+    unset $NOTIFY_SEND_OPTS
+  fi
   $NOTIFY_SEND="$NOTIFY_SEND $NOTIFY_SEND_OPTS"
 
-	$NOTIFY_SEND "$1"
+  $NOTIFY_SEND "$1"
 }
 
 function encrypt() {
-	if [ -z $KEYID ]; then
-		KEYID=$(zenity --entry --text "Enter Key ID")
-	fi
+  if [ -z $KEYID ]; then
+    KEYID=$(zenity --entry --text "Enter Key ID")
+  fi
 
-	($XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in) && encrypt_success=1
+  ($XCLIP -out | $GPG -r "${KEYID}" --armor -es | $XCLIP -in) && encrypt_success=1
 
-	if [ $encrypt_success == "1" ]; then
-		notify "Encrypted data in clipboard to key ${KEYID}"
-	else
-		notify "Failed to encrypt data in clipboard!"
-		exit 2
-	fi
+  if [ $encrypt_success == "1" ]; then
+    notify "Encrypted data in clipboard to key ${KEYID}"
+  else
+    notify "Failed to encrypt data in clipboard!"
+    exit 2
+  fi
 }
 
 function decrypt() {
-	$XCLIP -out | $GPG -d | $XCLIP -in && decrypt_success=1
-	chars=$($XCLIP -out | wc -m)
-	if [ $decrypt_success == "1" ]; then
-		notify "Decrypted in clipboard: $chars characters"
-	else
-		notify "Failed to decrypt encrypted data from keyboard!"
-		exit 3
-	fi
+  $XCLIP -out | $GPG -d | $XCLIP -in && decrypt_success=1
+  chars=$($XCLIP -out | wc -m)
+  if [ $decrypt_success == "1" ]; then
+    notify "Decrypted in clipboard: $chars characters"
+  else
+    notify "Failed to decrypt encrypted data from keyboard!"
+    exit 3
+  fi
 }
 
 function import_pubkey() {
@@ -71,12 +71,13 @@ function import_pubkey() {
     exit 3
   fi
 }
+
 CONTENT="$($XCLIP -out)"
 
 if [[ ${CONTENT} =~ "-----BEGIN PGP MESSAGE-----" ]]; then
-	decrypt
+  decrypt
 elif [[ ${CONTENT} =~ "-----BEGIN PGP PUBLIC KEY BLOCK-----" ]]; then
   import_pubkey
 else
-	encrypt
+  encrypt
 fi
